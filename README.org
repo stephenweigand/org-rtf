@@ -1,0 +1,9 @@
+* org-rtf
+
+This is probably not going to be an RTF backend for [[https://orgmode.org/][Org]]. But if it were some steps would be
+
+1. Create (or search for) an Org file to serve as a test case
+2. Look at John Kitchin's [[https://github.com/jkitchin/scimax/blob/master/ox-rtf.el][ox-rtf.el]]
+
+
+
