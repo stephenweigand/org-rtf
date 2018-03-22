@@ -2,10 +2,18 @@
 #+AUTHOR: Stephen Weigand
 #+EMAIL: Weigand.Stephen@gmail.com
 #+STARTUP: showall
+#+OPTIONS: toc:nil
 
 * Markup
 
-Fromt he manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= and
+From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= and
 ~code~, and, if you must, ‘+strike-through+’. Text in the code and
 verbatim string is not processed for Org mode specific syntax, it is
 exported verbatim."
+
+
+Export this with ~C-x C-e~ after putting point at the end of the following line.
+
+#+BEGIN_SRC 
+(org-rtf-export-as-rtf)
+#+END_SRC
