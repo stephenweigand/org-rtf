@@ -29,6 +29,22 @@
 (defun org-rtf-paragraph (paragraph contents info)
   (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}" (or contents "")))
 
+(defun org-rtf-make-preamble (info)
+  "{\\rtf1"
+  info)
+
+(defun org-rtf-template (contents info)
+  "Return complete document string after RTF conversion.
+CONTENTS is the transcoded contents string.  INFO is a plist
+holding export options."
+  (concat
+   "{\\rtf1\\ansi\\deff0\n"
+   ;;  (org-rtf-make-preamble info)
+   ;; Document's body
+   contents
+   "} End RTF"))
+  
+
 ;;; Kitchin's work
 (org-export-define-derived-backend 'RTF 'ascii
   :translate-alist '((bold . org-rtf-bold)
@@ -48,6 +64,7 @@
 		     ;; (latex-fragment . rtf-latex-fragment)
 		     ;; (footnote-reference . rtf-footnote-reference)
 		     ;;(footnote-definition . rtf-footnote-definition))
+		     (template . org-rtf-template)
 		     ))
 
 ;;; End-user functions
