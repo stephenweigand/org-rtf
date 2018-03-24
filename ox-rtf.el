@@ -1,36 +1,96 @@
-;;; ox-rtf.el -- Probably not an RTF backend for Org
-;;; Borrowing heavily from John Kitchin's Scimax `ox-rtf.el' at
-;;;
-;;;    https://github.com/jkitchin/scimax/blob/master/ox-rtf.el
-;;;
+;;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine
 
-;; (require 'ox-org)
+;; Author: Stephen Weigand <weigand dot stephen at gmail dot com>
+;;
+;; Borrowing heavily from John Kitchin's Scimax `ox-rtf.el' at
+;;
+;;    https://github.com/jkitchin/scimax/blob/master/ox-rtf.el
+;;
+
+;;; Commentary:
+
+;; This library implements an RTF back-end for Org generic exporter.
+;; See Org manual for more information.
+
+;;; Code:
+
+;;; Dependencies
 (require 'ox)
 
+;; Mostly taken from Kitchin's `ox-rtf.el' but prepending `org-' to functions
+
+;;; Transcode Functions (alphabetical)
+
+;;;; Bold
+
 (defun org-rtf-bold (bold contents info)
+  "Transcode BOLD from Org to RTF.
+CONTENTS is the text with bold markup.  INFO is a plist holding
+contextual information."
   (format "{\\b %s}" contents))
 
-(defun org-rtf-italic (el contents info)
+;;;; Code (`org-ascii-code' allows customization)
+
+(defun org-rtf-code (code _contents info)
+  "Return a CODE object from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual
+information."
+  (format "{\\f2 %s}" (org-element-property :value code)))
+
+
+;;;; Italic
+
+(defun org-rtf-italic (_italic contents _info)
+  "Transcode italic from Org to RTF.
+CONTENTS is the text with italic markup.  INFO is a plist holding
+contextual information."
   (format "{\\i %s}" contents))
 
-(defun org-rtf-underline (el contents info)
-  (format "{\\ul %s}" contents))
+;;;; Strike-through
 
-(defun org-rtf-strike-through (el contents info)
+(defun org-rtf-strike-through (_strike-through contents _info)
+  "Transcode STRIKE-THROUGH from Org to RTF.
+CONTENTS is text with strike-through markup.  INFO is a plist
+holding contextual information."
   (format "{\\strike %s}" contents))
 
-(defun org-rtf-code (el contents info)
-  (format "{\\f2 %s}" contents))
 
-(defun org-rtf-verbatim (el contents info)
-  (format "{\\f2 %s}" contents))
+;;;; Underline
+
+(defun org-rtf-underline (_underline contents _info)
+  "Transcode UNDERLINE from Org to RTF.
+CONTENTS is the text with underline markup.  INFO is a plist
+holding contextual information."
+  (format "{\\ul %s}" contents))
+
+;;;; Verbatim
+
+(defun org-rtf-verbatim (verbatim _contents info)
+  "Return a VERBATIM object from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual information."
+  (format "{\\f2 %s}" ;(plist-get info :ascii-verbatim-format)
+	  (org-element-property :value verbatim)))
+
+
 
 ;; No new line before `\\par' because string already ends in a new line?
 (defun org-rtf-paragraph (paragraph contents info)
   (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}" (or contents "")))
 
+
+;; Pure Kitchin here and I have no idea what the property stuff is
+(defun org-rtf-headline (headline contents info)
+  "Transcode a HEADLINE element from Org to RTF.
+CONTENTS holds the contents of the headline.  INFO is a plist
+holding contextual information."
+  (format
+   ; Why two `%s'? Second is `contents' (rest of document?)
+   ; "{\\b %s}\\par %s"
+   "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s"
+   (or (org-element-property :raw-value headline) "") contents))
+
 (defun org-rtf-make-preamble (info)
-  "{\\rtf1"
+  "{\\rtf1\\"
   info)
 
 (defun org-rtf-template (contents info)
@@ -56,7 +116,7 @@ holding export options."
 		     (code . org-rtf-code)
 		     (strike-through . org-rtf-strike-through)
 		     (paragraph . org-rtf-paragraph)
-		     ;; (headline . rtf-headline)
+		     (headline . org-rtf-headline)
 		     ;; (src-block . rtf-src)
 		     ;; (table . rtf-table) 
 		     ;; (fixed-width . rtf-fixed-width)
