@@ -9,7 +9,9 @@
 From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= and
 ~code~, and, if you must, +strike-through+. Text in the code and
 verbatim string is not processed for Org mode specific syntax, it is
-exported verbatim."
+exported verbatim." Also we can use x^ and x_2. 
+
+Greek symbols like \beta are not yet implemented.
 
 Export this with ~C-x C-e~ after putting point at the end of the following line.
 
