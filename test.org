@@ -11,9 +11,8 @@ From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= 
 verbatim string is not processed for Org mode specific syntax, it is
 exported verbatim."
 
-
 Export this with ~C-x C-e~ after putting point at the end of the following line.
 
-#+BEGIN_SRC 
+#+BEGIN_SRC emacs-lisp
 (org-rtf-export-as-rtf)
 #+END_SRC
