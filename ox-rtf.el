@@ -1,23 +1,85 @@
-;;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine
+;;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
 ;; Author: Stephen Weigand <weigand dot stephen at gmail dot com>
+
 ;;
-;; Borrowing heavily from John Kitchin's Scimax `ox-rtf.el' at
+;; Initially borrowing from John Kitchin's Scimax `ox-rtf.el' at
 ;;
 ;;    https://github.com/jkitchin/scimax/blob/master/ox-rtf.el
 ;;
+;; Currently trying to emulate `ox-ascii.el' and `ox-html.el' and
+;; friends in terms of doc strings function arguments, etc.
 
 ;;; Commentary:
-
+;;
 ;; This library implements an RTF back-end for Org generic exporter.
 ;; See Org manual for more information.
 
 ;;; Code:
 
-;;; Dependencies
+;;; Dependencies (SDW is not sure which are needed)
 (require 'ox)
+(require 'cl-lib)
+(require 'format-spec)
 
-;; Mostly taken from Kitchin's `ox-rtf.el' but prepending `org-' to functions
+;;; Define Back-end
+(org-export-define-backend 'RTF
+  '((bold . org-rtf-bold)
+    ;; (center-block . org-rtf-center-block)
+    ;; (clock . org-rtf-clock)
+    (code . org-rtf-code)
+    ;; (drawer . org-rtf-drawer)
+    ;; (dynamic-block . org-rtf-dynamic-block)
+    ;; (entity . org-rtf-entity)
+    ;; (example-block . org-rtf-example-block)
+    ;; (export-block . org-rtf-export-block)
+    ;; (export-snippet . org-rtf-export-snippet)
+    (fixed-width . org-rtf-fixed-width)
+    ;; (footnote-reference . org-rtf-footnote-reference)
+    (headline . org-rtf-headline)
+    ;; (horizontal-rule . org-rtf-horizontal-rule)
+    ;; (inline-src-block . org-rtf-inline-src-block)
+    ;; (inlinetask . org-rtf-inlinetask)
+    ;; (inner-template . org-rtf-inner-template)
+    (italic . org-rtf-italic)
+    ;; (item . org-rtf-item)
+    ;; (keyword . org-rtf-keyword)
+    ;; (latex-environment . org-rtf-latex-environment)
+    ;; (latex-fragment . org-rtf-latex-fragment)
+    (line-break . org-rtf-line-break)
+    ;; (link . org-rtf-link)
+    ;; (node-property . org-rtf-node-property)
+    (paragraph . org-rtf-paragraph)
+    ;; (plain-list . org-rtf-plain-list)
+    ;; (plain-text . org-rtf-plain-text)
+    ;; (planning . org-rtf-planning)
+    ;; (property-drawer . org-rtf-property-drawer)
+    ;; (quote-block . org-rtf-quote-block)
+    ;; (radio-target . org-rtf-radio-target)
+    (section . org-rtf-section)
+    ;; (special-block . org-rtf-special-block)
+    ;; (src-block . org-rtf-src-block)
+    ;; (statistics-cookie . org-rtf-statistics-cookie)
+    (strike-through . org-rtf-strike-through)
+    (subscript . org-rtf-subscript)
+    (superscript . org-rtf-superscript)
+    ;; (table . org-rtf-table)
+    ;; (table-cell . org-rtf-table-cell)
+    ;; (table-row . org-rtf-table-row)
+    ;; (target . org-rtf-target)
+    (template . org-rtf-template)
+    ;; (timestamp . org-rtf-timestamp)
+    (underline . org-rtf-underline)
+    (verbatim . org-rtf-verbatim))
+    ;; (verse-block . org-rtf-verse-block)
+  :menu-entry
+  '(?r "Export to RTF" org-rtf-export-as-rtf)
+  :options-alist ;; Not sure what this does
+  '((:subtitle "SUBTITLE" nil nil parse)))
+
+
+
+;;; User Configurable Variables (None now)
 
 ;;; Transcode Functions (alphabetical)
 
@@ -29,7 +91,7 @@ CONTENTS is the text with bold markup.  INFO is a plist holding
 contextual information."
   (format "{\\b %s}" contents))
 
-;;;; Code (`org-ascii-code' allows customization)
+;;;; Code
 
 (defun org-rtf-code (code _contents info)
   "Return a CODE object from Org to RTF.
@@ -37,6 +99,17 @@ CONTENTS is nil.  INFO is a plist holding contextual
 information."
   (format "{\\f2 %s}" (org-element-property :value code)))
 
+;;;; Headline
+
+(defun org-rtf-headline (headline contents info)
+  "Transcode a HEADLINE element from Org to RTF.
+CONTENTS holds the contents of the headline.  INFO is a plist
+holding contextual information."
+  (format
+   ; Why two `%s'? Second is `contents' (rest of document?)
+   ;; "{\\b %s}\\par %s"
+   "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s" 
+   (or (org-element-property :raw-value headline) "") contents))
 
 ;;;; Italic
 
@@ -46,6 +119,40 @@ CONTENTS is the text with italic markup.  INFO is a plist holding
 contextual information."
   (format "{\\i %s}" contents))
 
+;;;; Line Break
+
+(defun org-rtf-line-break (_line-break _contents _info)
+  "Transcode a LINE-BREAK object from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual
+  information."
+  (concat "\\line" hard-newline))
+
+;;;; Plain Text
+
+(defun org-rtf-plain-text (text info)
+  "Transcode a TEXT string from Org to RTF.
+INFO is a plist used as a communication channel."
+  ;; (let ((utf8p (eq (plist-get info :ascii-charset) 'utf-8)))
+  ;;   (when (and utf8p (plist-get info :with-smart-quotes))
+  ;;     (setq text (org-export-activate-smart-quotes text :utf-8 info)))
+  ;;   (if (not (plist-get info :with-special-strings)) text
+  ;;     (setq text (replace-regexp-in-string "\\\\-" "" text))
+  ;;     (if (not utf8p) text
+	;; Usual replacements in utf-8 with proper option set.
+	(replace-regexp-in-string
+	 "\\.\\.\\." "..."; "…"
+	 (replace-regexp-in-string
+	  "--" "{\\endash}"
+	  (replace-regexp-in-string "---" "{\\emdash}" text))))
+
+;;;; Section
+
+(defun org-rtf-section (section contents info)
+  "Transcode a SECTION element from Org to RTF.
+CONTENTS is the contents of the section.  INFO is a plist holding
+contextual information."
+  contents)
+
 ;;;; Strike-through
 
 (defun org-rtf-strike-through (_strike-through contents _info)
@@ -53,6 +160,23 @@ contextual information."
 CONTENTS is text with strike-through markup.  INFO is a plist
 holding contextual information."
   (format "{\\strike %s}" contents))
+
+;;;; Subscript
+
+(defun org-rtf-subscript (subscript contents _info)
+  "Transcode a SUBSCRIPT object from Org to RTF.
+CONTENTS is the contents of the object.  INFO is a plist holding
+contextual information."
+  (format "{\\sub %s}" contents))
+
+
+;;;; Superscript
+
+(defun org-rtf-superscript (superscript contents _info)
+  "Transcode a SUPERSCRIPT object from Org to RTF.
+CONTENTS is the contents of the object.  INFO is a plist holding
+contextual information."
+  (format "{\\super %s}" contents))
 
 
 ;;;; Underline
@@ -73,21 +197,13 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 
 
 
-;; No new line before `\\par' because string already ends in a new line?
 (defun org-rtf-paragraph (paragraph contents info)
-  (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}" (or contents "")))
+  "Transcode a PARAGRAPH element from Org to RTF.
+CONTENTS is the contents of the paragraph, as a string.  INFO is
+the plist used as a communication channel."
+  (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}" contents));; (or contents "")))
 
 
-;; Pure Kitchin here and I have no idea what the property stuff is
-(defun org-rtf-headline (headline contents info)
-  "Transcode a HEADLINE element from Org to RTF.
-CONTENTS holds the contents of the headline.  INFO is a plist
-holding contextual information."
-  (format
-   ; Why two `%s'? Second is `contents' (rest of document?)
-   ; "{\\b %s}\\par %s"
-   "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s"
-   (or (org-element-property :raw-value headline) "") contents))
 
 (defun org-rtf-make-preamble (info)
   "{\\rtf1\\"
@@ -105,32 +221,9 @@ holding export options."
    "} End RTF"))
   
 
-;;; Kitchin's work
-(org-export-define-derived-backend 'RTF 'ascii
-  :translate-alist '((bold . org-rtf-bold)
-		     (italic . org-rtf-italic)
-		     (underline . org-rtf-underline)
-		     ;; (superscript . rtf-super)
-		     ;; (subscript . rtf-sub)
-		     (verbatim . org-rtf-verbatim)
-		     (code . org-rtf-code)
-		     (strike-through . org-rtf-strike-through)
-		     (paragraph . org-rtf-paragraph)
-		     (headline . org-rtf-headline)
-		     ;; (src-block . rtf-src)
-		     ;; (table . rtf-table) 
-		     ;; (fixed-width . rtf-fixed-width)
-		     ;; (link . rtf-link)
-		     ;; (latex-fragment . rtf-latex-fragment)
-		     ;; (footnote-reference . rtf-footnote-reference)
-		     ;;(footnote-definition . rtf-footnote-definition))
-		     (template . org-rtf-template)
-		     ))
-
 ;;; End-user functions
 
-;;; Taken straight from `https://raw.githubusercontent.com/emacsmirror/org/master/lisp/ox-ascii.el'
-;;; with query replace of ascii -> rtf
+;;; Taken straight from `ox-ascii.el' with query replace of ascii -> rtf
 
 ;;;###autoload
 (defun org-rtf-export-as-rtf
