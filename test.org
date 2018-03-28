@@ -11,9 +11,48 @@ From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= 
 verbatim string is not processed for Org mode specific syntax, it is
 exported verbatim." Also we can use x^ and x_2. 
 
-Greek symbols like \beta are not yet implemented.
+Greek symbols like \beta are not yet implemented. 
 
-Export this with ~C-x C-e~ after putting point at the end of the following line.
+* Whitespace in paragraphs not very robust.
+
+Here is an example of what a paragraph looks like
+in RTF. Blank lines are ignored by RTF readers
+but spaces are maintained. We want writers to
+not have to worry about whitespace too much.
+
+#+BEGIN_EXAMPLE
+{\pard
+This is my paragraph and I have
+ wrapped the lines so there
+ is space between words (and
+ the space is at the start of
+ the line).
+\par}
+#+END_EXAMPLE
+
+
+This paragraph   demonstrates some eratic    spacing that is
+handled well with the exporter. It preserves single or
+double spaces after a sentence ends.  Notice?    It also fixes
+too many spaces after a sentence end. This is handled by
+~org-rtf--fill-string~ which adapts ~org-ascii--fill-string~
+plus I added the RTF-required white space to at the start
+of the second and subsequent lines in a paragraph. 
+
+   This paragraph demonstrates some 
+   sensible spacing that is also
+   handled well.
+
+   This paragraph demonstrates some 
+     sensible spacing that is *not*
+     handled well.
+
+   This paragraph demonstrates some
+sensible spacing that is *not*
+handled well.
+
+   
+
 
 #+BEGIN_SRC emacs-lisp
 (org-rtf-export-as-rtf)
