@@ -1,4 +1,4 @@
-;;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine -*- lexical-binding: t; -*-
+;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
 ;; Author: Stephen Weigand <weigand dot stephen at gmail dot com>
 
@@ -201,7 +201,8 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
   "Transcode a PARAGRAPH element from Org to RTF.
 CONTENTS is the contents of the paragraph, as a string.  INFO is
 the plist used as a communication channel."
-  (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}" contents));; (or contents "")))
+  (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}"
+	  (org-rtf--fill-string contents fill-column info 'left)))
 
 
 
@@ -219,7 +220,58 @@ holding export options."
    ;; Document's body
    contents
    "} End RTF"))
-  
+
+
+;;; Internal Functions
+
+;;; This is from `ox-ascii.el' and I'm using it to make a
+;;; fill command to wrap paragraphs with a space on lines >= 2
+;;; Like this:
+;;; {\pard 
+;;; This is my
+;;;  paragraph and I have
+;;;  wrapped the lines so there
+;;;  is space between words (and
+;;;  it's at the start of the line).
+;;; \par}
+(defun org-rtf--fill-string (s text-width info &optional justify)
+  "Fill a string with specified text-width and return it.
+
+S is the string being filled.  TEXT-WIDTH is an integer
+specifying maximum length of a line.  INFO is the plist used as
+a communication channel.
+
+Optional argument JUSTIFY can specify any type of justification
+among `left', `center', `right' or `full'.  A nil value is
+equivalent to `left'.  For a justification that doesn't also fill
+string, see `org-ascii--justify-lines' and
+`org-ascii--justify-block'.
+
+Return nil if S isn't a string."
+  (when (stringp s)                ;; when S is a string
+    (let ((double-space-p sentence-end-double-space))
+      (with-temp-buffer  ;; in a temp buffer `let' variables then `insert' into buffer a filled region
+	;; These set arguments for `fill-region' to use
+	(let ((fill-column text-width) ;; `fill-column' from `text-width'
+	      (use-hard-newlines t)    ;; Set to true
+	      (sentence-end-double-space double-space-p))
+	  (insert (if (plist-get info :preserve-breaks)
+		      (replacev-regexp-in-string "\n" hard-newline s)
+		    s))
+	  (fill-region (point-min) (point-max) justify)) ; End second `let'
+	;; TODO: Is this OK? We are in a temporary buffer so I can navigate it
+	;; Trying to start each line after first with a space
+	(goto-char (point-min))
+	(let ((line-num 1)
+	      (total-lines (count-lines (point-min) (point-max))))
+	   (while (< line-num total-lines)
+	     (forward-line)
+	     (insert " ")
+	     (setq line-num (+ line-num 1))))
+	
+	(buffer-string))); end first let ;; return contents of current buffer as a string
+    ) ; end `when'
+  )
 
 ;;; End-user functions
 
@@ -263,3 +315,4 @@ is non-nil."
 (provide 'ox-rtf)
 
 ;;; ox-rtf.el ends here
+    
