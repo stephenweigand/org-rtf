@@ -35,8 +35,8 @@
     ;; (dynamic-block . org-rtf-dynamic-block)
     ;; (entity . org-rtf-entity)
     (example-block . org-rtf-example-block)
-    ;; (export-block . org-rtf-export-block)
-    ;; (export-snippet . org-rtf-export-snippet)
+    (export-block . org-rtf-export-block)
+    (export-snippet . org-rtf-export-snippet)
     (fixed-width . org-rtf-fixed-width)
     ;; (footnote-reference . org-rtf-footnote-reference)
     (headline . org-rtf-headline)
@@ -135,7 +135,8 @@ information."
 ;; so I need to wrap as a paragraph. I don't want a
 ;; `\\line' on the last line so I trim the string. But that
 ;; kills the last newline and so to male `\par}' on a line
-;; by itself I add a new line after `%s'.
+;; by itself I add a new line after `%s' (which `org-rtf-paragraph'
+;; does not need.
 (defun org-rtf-example-block (example-block _contents info)
   "Transcode a EXAMPLE-BLOCK element from Org to RTF.
 CONTENTS is nil.  INFO is a plist holding contextual information."
@@ -148,7 +149,22 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
      (org-export-format-code-default example-block info) nil t)
     0 -6)))
     
-    
+;;;; Export Block
+(defun org-rtf-export-block (export-block _contents info)
+  "Transcode a EXPORT-BLOCK element from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual information."
+  (when (string= (org-element-property :type export-block) "RTF")
+    ;; Via `org-ascii-export-block' realized this is what holds the lines
+    (org-element-property :value export-block)))
+
+;;;; Export Snippet
+
+(defun org-rtf-export-snippet (export-snippet _contents _info)
+  "Transcode a EXPORT-SNIPPET object from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual information."
+  (when (eq (org-export-snippet-backend export-snippet) 'rtf)
+    (org-element-property :value export-snippet)))
+
 
 ;;;; Headline
 
