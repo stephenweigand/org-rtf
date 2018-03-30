@@ -11,7 +11,12 @@ From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= 
 verbatim string is not processed for Org mode specific syntax, it is
 exported verbatim." Also we can use x^ and x_2. 
 
+Hard line breaks \\    
+are implemented.
+
 Greek symbols like \beta are not yet implemented. 
+
+
 
 * Whitespace in paragraphs not very robust.
 
@@ -54,6 +59,19 @@ handled well.
    
 
 
+
+* Center block
+
+I do not know how to center. This is from the manual. The
+contents are already a formatted paragraph.
+
+#+BEGIN_CENTER
+Everything should be made as simple as possible, \\
+but not any simpler
+#+END_CENTER
+
+* Special symbols
+I do not know where the exporters deal with special symbols. 
 #+BEGIN_SRC emacs-lisp
 (org-rtf-export-as-rtf)
 #+END_SRC
