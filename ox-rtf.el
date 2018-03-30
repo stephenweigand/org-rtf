@@ -15,6 +15,8 @@
 ;; This library implements an RTF back-end for Org generic exporter.
 ;; See Org manual for more information.
 
+
+
 ;;; Code:
 
 ;;; Dependencies (SDW is not sure which are needed)
@@ -25,7 +27,7 @@
 ;;; Define Back-end
 (org-export-define-backend 'RTF
   '((bold . org-rtf-bold)
-    ;; (center-block . org-rtf-center-block)
+    (center-block . org-rtf-center-block)
     ;; (clock . org-rtf-clock)
     (code . org-rtf-code)
     ;; (drawer . org-rtf-drawer)
@@ -91,6 +93,33 @@ CONTENTS is the text with bold markup.  INFO is a plist holding
 contextual information."
   (format "{\\b %s}" contents))
 
+;;;; Center Block
+;; This is from https://www.emacswiki.org/emacs/rtf-mode.el
+;; and used to find patterns for code highlighting.
+;; Useage: After this sexp do C-u C-x C-c
+;; (rtf-make-loudcmd-re '(pard))
+(defun rtf-make-loudcmd-re (cmdlist)
+  (concat "\\(\\\\\\)\\("
+	  (regexp-opt (mapcar 'symbol-name cmdlist))
+	  "\\)\\b\\( ?\\)"))
+
+
+(defun org-rtf-center-block (_center-block contents _info)
+  "Transcode a CENTER-BLOCK element from Org to RTF.
+CONTENTS holds the contents of the block.  INFO is a plist
+holding contextual information."
+  ;; Replace standard paragraph left justification (\ql) with
+  ;; center justification (\qc).
+  ;; `replace-regexp-in-string' has args
+  ;; REGEXP
+  ;; REP (replacement)
+  ;; STRING
+  ;; optional FIXEDCASE
+  ;; optional LITERAL (which we want it inserts REP literally
+  (replace-regexp-in-string "\\(\\\\\\)\\(\\(?:ql\\)\\)\\b\\( ?\\)"
+			    "\\qc" contents nil t))
+
+
 ;;;; Code
 
 (defun org-rtf-code (code _contents info)
@@ -126,6 +155,15 @@ contextual information."
 CONTENTS is nil.  INFO is a plist holding contextual
   information."
   (concat "\\line" hard-newline))
+
+;;;; Paragraph
+
+(defun org-rtf-paragraph (paragraph contents info)
+  "Transcode a PARAGRAPH element from Org to RTF.
+CONTENTS is the contents of the paragraph, as a string.  INFO is
+the plist used as a communication channel."
+  (format "{\\pard\\ql\\sb180\\sa180\\f0\n%s\\par}"
+	  (org-rtf--fill-string contents fill-column info 'left)))
 
 ;;;; Plain Text
 
@@ -197,14 +235,6 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 
 
 
-(defun org-rtf-paragraph (paragraph contents info)
-  "Transcode a PARAGRAPH element from Org to RTF.
-CONTENTS is the contents of the paragraph, as a string.  INFO is
-the plist used as a communication channel."
-  (format "{\\pard\\sb180\\sa180\\f1\n%s\\par}"
-	  (org-rtf--fill-string contents fill-column info 'left)))
-
-
 
 (defun org-rtf-make-preamble (info)
   "{\\rtf1\\"
@@ -219,7 +249,7 @@ holding export options."
    ;;  (org-rtf-make-preamble info)
    ;; Document's body
    contents
-   "} End RTF"))
+   "} RTF file ends here"))
 
 
 ;;; Internal Functions
