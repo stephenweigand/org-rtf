@@ -23,6 +23,7 @@
 (require 'ox)
 (require 'cl-lib)
 (require 'format-spec)
+(require 'ox-ascii)
 
 ;;; Define Back-end
 (org-export-define-backend 'RTF
@@ -33,7 +34,7 @@
     ;; (drawer . org-rtf-drawer)
     ;; (dynamic-block . org-rtf-dynamic-block)
     ;; (entity . org-rtf-entity)
-    ;; (example-block . org-rtf-example-block)
+    (example-block . org-rtf-example-block)
     ;; (export-block . org-rtf-export-block)
     ;; (export-snippet . org-rtf-export-snippet)
     (fixed-width . org-rtf-fixed-width)
@@ -127,6 +128,27 @@ holding contextual information."
 CONTENTS is nil.  INFO is a plist holding contextual
 information."
   (format "{\\f2 %s}" (org-element-property :value code)))
+
+;;;; Example block
+
+;; Unlike `center-block' this is not already a paragraph
+;; so I need to wrap as a paragraph. I don't want a
+;; `\\line' on the last line so I trim the string. But that
+;; kills the last newline and so to male `\par}' on a line
+;; by itself I add a new line after `%s'.
+(defun org-rtf-example-block (example-block _contents info)
+  "Transcode a EXAMPLE-BLOCK element from Org to RTF.
+CONTENTS is nil.  INFO is a plist holding contextual information."
+  (format
+   "{\\pard\\ql\\sb180\\sa180\\f2\n%s\n\\par}"
+   ;; Remove `\\line' at very end
+   (substring
+    (replace-regexp-in-string
+     "\n" "\\line\n"
+     (org-export-format-code-default example-block info) nil t)
+    0 -6)))
+    
+    
 
 ;;;; Headline
 
@@ -249,7 +271,7 @@ holding export options."
    ;;  (org-rtf-make-preamble info)
    ;; Document's body
    contents
-   "} RTF file ends here"))
+   "\n} RTF file ends here"))
 
 
 ;;; Internal Functions
