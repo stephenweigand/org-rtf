@@ -72,6 +72,18 @@ but not any simpler
 
 * Special symbols
 I do not know where the exporters deal with special symbols. 
+
+#+BEGIN_EXAMPLE
+pi + 4 > 7
+#+END_EXAMPLE
+
+A new paragraph.
+
+#+BEGIN_EXAMPLE
+pi + 4 > 7
+a <- function(b) b + 3
+#+END_EXAMPLE
+
 #+BEGIN_SRC emacs-lisp
 (org-rtf-export-as-rtf)
 #+END_SRC
