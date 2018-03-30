@@ -87,3 +87,27 @@ a <- function(b) b + 3
 #+BEGIN_SRC emacs-lisp
 (org-rtf-export-as-rtf)
 #+END_SRC
+
+Now some "pure" RTF.
+
+#+BEGIN_EXPORT rtf
+{\ldblequote}Hello world!{\rdblquote}
+#+END_EXPORT
+
+#+BEGIN_EXPORT rtf
+{\ldblequote}Hello world!{\rdblquote}
+{\pard
+I am
+ a walrus
+\par}
+#+END_EXPORT
+
+I can also test snippets to get a bullet like this: @@rtf:\bullet@@
+
+The single-line export does not seem to work:
+
+#+RTF: {\pard Can I get an \emdash?\par}
+
+This is some code
+
+: plot(x, y)
