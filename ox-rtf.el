@@ -176,7 +176,11 @@ holding contextual information."
    ; Why two `%s'? Second is `contents' (rest of document?)
    ;; "{\\b %s}\\par %s"
    "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s" 
-   (or (org-element-property :raw-value headline) "") contents))
+   ;;(org-export-get-headline-number headline info) ;; A list like '(1 1)'
+   ;; (or (org-element-property :raw-value headline) "") contents))
+   (org-ascii--build-title headline info 60 t)
+   contents))
+
 
 ;;;; Italic
 
