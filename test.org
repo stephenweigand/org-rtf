@@ -4,16 +4,17 @@
 #+STARTUP: showall
 #+OPTIONS: toc:nil
 
-* Markup
+* TODO Markup                                                         :mytag:
 
 From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= and
 ~code~, and, if you must, +strike-through+. Text in the code and
 verbatim string is not processed for Org mode specific syntax, it is
-exported verbatim." Also we can use x^ and x_2. 
+exported verbatim." Also we can use x^2 and x_2. 
 
 Hard line breaks \\    
 are implemented.
 
+** [#B] Symbols
 Greek symbols like \beta are not yet implemented. 
 
 
