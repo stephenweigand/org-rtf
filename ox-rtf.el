@@ -1,7 +1,11 @@
 ;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
-;; Author: Stephen Weigand <weigand dot stephen at gmail dot com>
+;; Copyright (C) 2018 
 
+;; Author: Stephen Weigand <weigand dot stephen at gmail dot com>
+;; Keywords: outlines, hypermedia, calendar, wp
+
+;; NEXT: handle title which needs defaults
 ;;
 ;; Initially borrowing from John Kitchin's Scimax `ox-rtf.el' at
 ;;
@@ -20,13 +24,14 @@
 ;;; Code:
 
 ;;; Dependencies (SDW is not sure which are needed)
+
 (require 'ox)
 (require 'cl-lib)
 (require 'format-spec)
 (require 'ox-ascii)
 
 ;;; Define Back-end
-(org-export-define-backend 'RTF
+(org-export-define-backend 'rtf
   '((bold . org-rtf-bold)
     (center-block . org-rtf-center-block)
     ;; (clock . org-rtf-clock)
@@ -78,11 +83,148 @@
   :menu-entry
   '(?r "Export to RTF" org-rtf-export-as-rtf)
   :options-alist ;; Not sure what this does
-  '((:subtitle "SUBTITLE" nil nil parse)))
+  '((:subtitle "SUBTITLE" nil nil parse)
+    (:rtf-bullets nil nil org-rtf-bullets)))
 
 
 
-;;; User Configurable Variables (None now)
+;;; User Configurable Variables
+
+(defgroup org-export-rtf nil
+  "Options for exporting Org mode files to RTF."
+  :tag "Org Export RTF"
+  :group 'org-export)
+
+;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Customization-Types.html
+;; FIXME: There may be a way to name these elements but
+;;        they are standard bullet, white bullet, and triangular bullet
+(defcustom org-rtf-bullets '("{\\u8226*}" "{\\u9702o}" "{\\u8227^}")
+  "Bullet characters for headlines converted to lists in RTF export.
+
+List of three strings representing the bullet symbols.
+
+The first string is used for the first level considered as low
+level, and so on.  If there are more levels than characters given
+here, the list will be repeated.
+
+Note that this variable doesn't affect plain lists
+representation."
+  :group 'org-export-rtf
+  :type '(list string string string))
+
+;;;; TODO This can be improved with a list of lists with number, family, and name
+(defcustom org-rtf-font-table-fonts
+  '("\\f0\\froman Times New Roman;"
+    "\\f1\\fswiss Arial;"
+    "\\f2\\fmodern Courier New;")
+  "Fonts available in the RTF document. The font name is a string
+and the font family is among the following table taken from
+
+  URL `http://www.biblioscape.com/rtf15_spec.htm#Heading12'
+
+nil      Unknown or default fonts (the default) 	
+roman    Roman, proportionally spaced serif fonts (e.g., Times New Roman, Palatino)
+swiss    Swiss, proportionally spaced sans serif fonts (e.g., Arial)
+modern   Fixed-pitch serif and sans serif fonts (e.g., Courier New, Pica)
+script   Script fonts (e.g., Cursive)
+decor    Decorative fonts (e.g., Old English, ITC Zapf Chancery)
+tech     Technical, symbol, and mathematical fonts (e.g., Symbol)
+bidi     Arabic, Hebrew, or other bidirectional font (e.g., Miriam)"
+  :group 'org-export-rtf
+  :type '(repeat
+	  (cons (string :tag "Font name")
+		(choice (const :tag "nil" nil)
+			(const :tag ""
+
+(defcustom org-rtf-colors
+  '((0 0 0)
+    (255 0 0)
+    (0 255 0)
+    (0 0 255))
+  "Colors available in the RTF document in the form of a list of
+three-integer lists. In RTF colors are declared in a color table
+group and specified in terms of their red, green, and blue
+components via the three commands
+
+  \redN\greenN\blueN;
+
+where N is an integer ranging from 0 to 255. Colors are
+implicitly assigned sequential numbers starting with zero (which
+is usually black) and color markup in the RTF document can be
+obtained by referring to the color number.  The RTF v1.5 spec (URL
+`http://www.biblioscape.com/rtf15_spec.htm#Heading16') gives this
+example of RTF:
+
+  {\\f1\\cb1\\cf2 This is colored text. The background is color1
+  and the foreground is color 2.}
+
+The default forground and background are specified with \\cf0 and
+\\cf0 and can be omitted."
+  :group 'org-exort-rtf
+  :type '(repeat
+	  (list (integer :tag "  Red")
+		(integer :tag "Green")
+		(integer :tag " Blue"))))
+
+
+(defcustom org-rtf-character-set "ansi"
+  "The character set for the RTF document."
+  :group 'org-export-rtf
+  :type '
+
+(defcustom org-rtf-default-font 0
+  "The default font number for the RTF document as specified
+by \\deff."
+  :group 'org-export-rtf
+  :type 'integer)
+
+
+(defcustom org-rtf-quasi-styles
+  '((paragraph . ((outline-level . nil)
+		  (first-line-indent . 0)
+		  (font-number . 0)
+		  (font-size . 12)
+		  (text-color . 0)
+		  (space-before . 0)
+		  (space-after . 0)
+		  (space-between-lines . 1000)
+		  (align . "left")
+		  (hypenate . nil)
+		  (keep-intact . nil)
+		  (extra-commands . ""))))
+  "Nested alist of formatting characteristics of standard paragraph,
+level 1 heading, level 2 heading, etc. In RTF most text is part
+of a paragraph and there are no semantic sectioning commands such
+as \\section in LaTeX or <h1> in HTML. Instead, a paragraph in RTF can
+be made to look like a level 1 heading by, for example, making it bold,
+enlarging the font, or changing the color, etc. This alist allows one
+to customize the formatting for a default paragraph and for a heading of
+any level.
+
+Within a level, the elements are as follows:
+
+  outline-level         \\outlinelevelN (N=0-8)  A metadata rather than semantic tag
+  first-line-indent     \\fi
+  font-number           \\fn
+  font-size             \\fs
+  text-color            \\cf
+  space-before          \\sb
+  space-after           \\sa
+  space-between-lines   \\sl Space between lines in points
+  align                 \\q? Paragraph aligment among left, right, or center
+  hyphenate             \\hypthpar Whether to hyphenate
+  keep-intact
+  extra-commands
+
+
+      
+  
+  
+  
+  ("extra" . "")
+;;; Template
+
+
 
 ;;; Transcode Functions (alphabetical)
 
@@ -172,14 +314,62 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
   "Transcode a HEADLINE element from Org to RTF.
 CONTENTS holds the contents of the headline.  INFO is a plist
 holding contextual information."
-  (format
-   ; Why two `%s'? Second is `contents' (rest of document?)
-   ;; "{\\b %s}\\par %s"
-   "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s" 
-   ;;(org-export-get-headline-number headline info) ;; A list like '(1 1)'
-   ;; (or (org-element-property :raw-value headline) "") contents))
-   (org-ascii--build-title headline info 60 t)
-   contents))
+  ;; (format
+  ;;  ; Why two `%s'? Second is `contents' (rest of document?)
+  ;;  ;; "{\\b %s}\\par %s"
+  ;;  "{\\pard\\b\\fs28\\myheadline %s\\par}\n\n%s" 
+  ;;  ;;(org-export-get-headline-number headline info) ;; A list like '(1 1)'
+  ;;  ;; (or (org-element-property :raw-value headline) "") contents))
+  ;;  (org-ascii--build-title headline info 60 t)
+  ;;  contents))
+
+  ;; SDW: Essentially a copy of  `org-ascii-headline'
+  ;; Don't export footnote section, which will be handled at the end
+  ;; of the template.
+  (unless (org-element-property :footnote-section-p headline)
+    (let* ((low-level (org-export-low-level-p headline info))
+	   (width 80) ;(org-ascii--current-text-width headline info))
+	   ;; Export title early so that any link in it can be
+	   ;; exported and seen in `org-ascii--unique-links'.
+	   (title (org-ascii--build-title headline info width (not low-level)))
+	   ;; Blank lines between headline and its contents.
+	   ;; `org-ascii-headline-spacing', when set, overwrites
+	   ;; original buffer's spacing.
+	   (pre-blanks
+	    (make-string (or (car (plist-get info :ascii-headline-spacing))
+			     (org-element-property :pre-blank headline)
+			     0)
+			 ?\n))
+	   (links (and (plist-get info :ascii-links-to-notes)
+		       (org-ascii--describe-links
+			(org-ascii--unique-links headline info) width info)))
+	   ;; Re-build contents, inserting section links at the right
+	   ;; place.  The cost is low since build results are cached.
+	   (body
+	    (if (not (org-string-nw-p links)) contents
+	      (let* ((contents (org-element-contents headline))
+		     (section (let ((first (car contents)))
+				(and (eq (org-element-type first) 'section)
+				     first))))
+		(concat (and section
+			     (concat (org-element-normalize-string
+				      (org-export-data section info))
+				     "\n\n"))
+			links
+			(mapconcat (lambda (e) (org-export-data e info))
+				   (if section (cdr contents) contents)
+				   ""))))))
+      ;; Deep subtree: export it as a list item.
+      (if low-level 
+	  (let* ((bullets org-rtf-bullets)
+		 (bullet
+		  (format "%s" (nth (mod (1- low-level) (length bullets)) bullets))))
+	    (concat bullet "{\\tab}" title "\n"))
+		 
+	;; Else: Standard headline.
+	(concat
+	 "{\\pard\\standardheadline\n"
+	 title "\n\\par}\n" pre-blanks body)))))
 
 
 ;;;; Italic
@@ -277,19 +467,26 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 
 
 
-
-(defun org-rtf-make-preamble (info)
-  "{\\rtf1\\"
-  info)
+;; TODO
+;; Where does this section go within this file?
+;; How to I use `template' intelligently
+(defun org-rtf-make-preamble (info); &optional template)
+  "Return a formatted RTF preamble.
+INFO is a plist used as a communication channel.  Optional
+argument TEMPLATE, when non-nil, is the header template string,
+as expected by `org-splice-latex-header'."
+  (concat "{\\rtf1\\" "test"))
+;;  info)
 
 (defun org-rtf-template (contents info)
   "Return complete document string after RTF conversion.
 CONTENTS is the transcoded contents string.  INFO is a plist
 holding export options."
   (concat
-   "{\\rtf1\\ansi\\deff0\n"
-   ;;  (org-rtf-make-preamble info)
+   ;; "{\\rtf1\\ansi\\deff0\n"
+   (org-rtf-make-preamble info)
    ;; Document's body
+   ;; (org-export-data (plist-get info :title) info) ;; how `ox-latex.el' does it by why not just `(plist-get info :title)'
    contents
    "\n} RTF file ends here"))
 
@@ -381,10 +578,14 @@ Export is done in a buffer named \"*Org RTF Export*\", which
 will be displayed when `org-export-show-temporary-export-buffer'
 is non-nil."
   (interactive)
-  (org-export-to-buffer 'RTF "*Org RTF Export*"
+  (org-export-to-buffer 'rtf "*Org RTF Export*"
     async subtreep visible-only body-only ext-plist (lambda () (text-mode))))
 
 (provide 'ox-rtf)
+
+;; Local variables:
+;; coding: utf-8
+;; End:
 
 ;;; ox-rtf.el ends here
     
