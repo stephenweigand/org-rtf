@@ -5,6 +5,9 @@
 #+OPTIONS: toc:nil
 
 * TODO Markup                                                         :mytag:
+  :LOGBOOK:
+  CLOCK: [2018-11-09 Fri 22:06]--[2018-11-09 Fri 22:07] =>  0:01
+  :END:
 
 From the manual: "You can make words *bold*, /italic/, _underlined_, =verbatim= and
 ~code~, and, if you must, +strike-through+. Text in the code and
@@ -15,7 +18,8 @@ Hard line breaks \\
 are implemented.
 
 ** [#B] Symbols
-Greek symbols like \beta are not yet implemented. 
+Greek symbols like \beta are not yet implemented. I do not
+even know where they are handled by the backend.
 
 
 
@@ -51,11 +55,12 @@ of the second and subsequent lines in a paragraph.
 
    This paragraph demonstrates some 
      sensible spacing that is *not*
-     handled well.
+     handled well. I think it is how 
+     ~fill-paragraph~ handles exdenting.
 
    This paragraph demonstrates some
 sensible spacing that is *not*
-handled well.
+handled well. See ~fill-paragraph~.
 
    
 
@@ -80,7 +85,7 @@ pi + 4 > 7
 
 A new paragraph.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_EXAMPLE -n
 pi + 4 > 7
 a <- function(b) b + 3
 #+END_EXAMPLE
@@ -112,3 +117,33 @@ The single-line export does not seem to work:
 This is some code
 
 : plot(x, y)
+
+* TODO Properly exporting headlines
+I haven't understood the likes of ~org-ascii-headline~ due to not
+understanding very much Emacs Lisp. Here is an outline of
+what ~org-ascii-headline~ is doing (as far as my reading tells me)
+1. Via ~unless~ only export the headline if it is not a footnote
+   section
+2. Via ~let*~ where order matters assign these variables
+
+   - low-level :: is it a "low-level" headline. How that is defined is
+                  unclear to me.
+
+   - width :: get current text width
+
+   - title :: via ~org-ascii--build-title~. This gives most of what I
+              want.
+
+   - pre-blanks :: figure out blanks around headline
+
+   - links :: whether to convert links to (foot?) notes before the
+              next headline or to handle them as in-line notes.
+
+   - body :: Comment says this is "re-build contents".
+
+Then if we are "low-level" we are in a "deep substree" so export
+it as bulleted list. Otherwise simple output.
+: ;; Else: Standard headline.
+: (concat title "\n" pre-blanks body)))))
+
+** TODO Sub in ~org-ascii-headline~ making minimal changes.
