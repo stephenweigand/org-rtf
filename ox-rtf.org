@@ -1,4 +1,4 @@
-
+#+PROPERTY: header-args :tangle yes :comments no
 * Header and copyright parts
 #+BEGIN_SRC emacs-lisp
 ;; ox-rtf.el --- Probably not an RTF Back-End for Org Export Engine -*- lexical-binding: t; -*-
@@ -29,7 +29,7 @@
 #+END_SRC
 
 * Dependencies
-I am not sure which of these are needed.
+** TODO Find which of these are needed
 #+BEGIN_SRC emacs-lisp
 ;;; Dependencies
 (require 'ox)
@@ -39,7 +39,6 @@ I am not sure which of these are needed.
 #+END_SRC
 
 * Define Back-End
-#+NAME: Define back end
 #+BEGIN_SRC emacs-lisp
 ;;; Define Back-end
 (org-export-define-backend 'rtf
@@ -96,8 +95,15 @@ I am not sure which of these are needed.
   :options-alist ;; Not sure what this does
   '((:subtitle "SUBTITLE" nil nil parse)
     (:rtf-bullets nil nil org-rtf-bullets)))
-
 #+END_SRC
+** Clock
+#+BEGIN_SRC emacs-lisp :tangle no
+(symbol-function 'org-ascii-clock)
+(find-function 'org-ascii-clock)
+#+END_SRC
+
+#+RESULTS:
+
 * User Configurable Variables
 ** Define the group
 #+BEGIN_SRC emacs-lisp
@@ -180,7 +186,7 @@ obtained by referring to the color number.  The RTF v1.5 spec (URL
 example of RTF:
 
   {\\f1\\cb1\\cf2 This is colored text. The background is color
-  1 and the foreground is color 2.}
+   1 and the foreground is color 2.}
 
 The default forground and background are specified with \\cf0 and
 \\cb0 and can be omitted."
